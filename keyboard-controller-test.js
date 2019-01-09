@@ -49,6 +49,10 @@ function gamestep(){
 		var left = parseInt(style.getPropertyValue("left")) + 2;
 		target.style.left = left + 'px';
 	}
+	
+	if( inputController.isKeyPressed(32) ){
+		console.log("JUMP!");
+	}
 
 	requestAnimationFrame(gamestep);
 }

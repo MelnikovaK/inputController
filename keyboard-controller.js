@@ -72,6 +72,7 @@ class InputController {
 
   _setActionActive( action, activate ){
   	if ( !( this.enabled && action && action.enabled ) ) return;
+  	if( action.active == activate ) return;
   	action.active = activate;
   	var event = new CustomEvent( activate ? this.ACTION_ACTIVATED : this.ACTION_DEACTIVATED, { 'detail': action.name });
   	this.target.dispatchEvent(event);
@@ -108,16 +109,16 @@ class InputController {
   }
 
   //
+
   isKeyPressed(keyCode) {
-  	/*
-  	return window.onkeypress = function(event) {
+  	var is_pressed = false;
+    window.addEventListener('keypress', function(event) {
   		if (event.keyCode == keyCode) {
-  			return true; 
-  		} else {
-  			return false;
+  			is_pressed = true;
   		}
-  	}
-  	*/
+  		console.log(is_pressed);
+  	});
+  	return is_pressed;
   }
 
 }
