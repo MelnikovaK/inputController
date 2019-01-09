@@ -2,9 +2,17 @@ class InputController {
 
   constructor( actions_to_bind, target ) {
     
+    this.ACTION_ACTIVATED = "input-controller:action-activated";
+    this.ACTION_DEACTIVATED  = "input-controller:action-deactivated";
+
+    //
     this.enabled = true;
+
+    //
     this.actions = {};
     this.actions_by_keycode = {};
+    
+    //
     if( actions_to_bind ) this.bindActions( actions_to_bind );
     if( target ) this.attach( target );
   }
@@ -35,6 +43,7 @@ class InputController {
   		var action = actions_to_bind[ action_name ];
   		
   		if( action.enabled == undefined ) action.enabled = true;
+  		action.name = action_name;
   		action.active = false;
   		this.actions[ action_name ] = action;
 
@@ -61,27 +70,35 @@ class InputController {
 		return this.actions[action_name].active;
   }
 
+  _setActionActive( action, activate ){
+  	if ( !( this.enabled && action && action.enabled ) ) return;
+  	action.active = activate;
+  	var event = new CustomEvent( activate ? this.ACTION_ACTIVATED : this.ACTION_DEACTIVATED, { 'detail': action.name });
+  	this.target.dispatchEvent(event);
+  }
+
+
+
   // KEYBOARD
   attachKeyboard( target ){
+
   	if( !this.onKeyDown ){
 		  this.onKeyDown = function(event){
 		  	var key_code = event.keyCode;
 		  	var action = this.actions_by_keycode[key_code];
-		  	if ( action && action.enabled == true && this.enabled){
-		  		action.active = true;
-		  	}
+		  	this._setActionActive(action,true);
 		  }.bind(this);
 
 		  this.onKeyUp = function(event){
 		  	var key_code = event.keyCode;
 		  	var action = this.actions_by_keycode[key_code];
-		  	if ( action ) {
-			  	action.active = false;
-		 	 }
+		  	this._setActionActive(action,false);
 		  }.bind(this);
   	}
-			window.addEventListener('keydown', this.onKeyDown );
-			window.addEventListener('keyup', this.onKeyUp );
+
+		window.addEventListener('keydown', this.onKeyDown );
+		window.addEventListener('keyup', this.onKeyUp );
+
   }
 
   detachKeyboard(){

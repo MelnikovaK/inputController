@@ -16,7 +16,26 @@ var actions = {
 
 let inputController = new InputController( actions );
 
-//
+
+
+// EVENT BASED BEHAVIOR
+target.addEventListener( inputController.ACTION_ACTIVATED, function (e) {
+  console.log("ACTION_ACTIVATED: ", e.detail );
+  if( e.detail == 'jump' ){
+  	target.style.borderColor = "#f00";
+  }
+}, false);
+
+target.addEventListener( inputController.ACTION_DEACTIVATED, function (e) {
+  console.log("ACTION_DEACTIVATED: ", e );
+  if( e.detail == 'jump' ){
+  	target.style.borderColor = "#000";
+  }
+}, false);
+
+
+
+// ITERATION BASED BEHAVIOR
 function gamestep(){
 	// console.log("gamestep");
 
@@ -24,17 +43,11 @@ function gamestep(){
 		var style = getComputedStyle(target);
 		var left = parseInt(style.getPropertyValue("left")) - 2;
 		target.style.left = left + 'px';
+
 	} else if( inputController.actions["right"].active ){
 		var style = getComputedStyle(target);
 		var left = parseInt(style.getPropertyValue("left")) + 2;
 		target.style.left = left + 'px';
-	}
-	if (inputController.actions["jump"]) {
-		if( inputController.actions["jump"].active ){
-			target.style.borderColor = "#f00";
-		} else {
-			target.style.borderColor = "black";
-		}
 	}
 
 	requestAnimationFrame(gamestep);
