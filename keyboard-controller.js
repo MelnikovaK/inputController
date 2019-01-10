@@ -7,6 +7,7 @@ class InputController {
 
     //
     this.enabled = true;
+    this.someKeyIsPressed = false;
 
     //
     this.actions = {};
@@ -111,14 +112,20 @@ class InputController {
   //
 
   isKeyPressed(keyCode) {
-  	var is_pressed = false;
-    window.addEventListener('keypress', function(event) {
-  		if (event.keyCode == keyCode) {
-  			is_pressed = true;
+  	this.onkeyPressed = function(event) {
+  		if ( event.keyCode == keyCode ) {
+  			this.someKeyIsPressed = true;
   		}
-  		console.log(is_pressed);
-  	});
-  	return is_pressed;
+  	}.bind(this)
+
+  	this.onkeyUnPressed = function(event) {
+  			this.someKeyIsPressed = false;
+  	}.bind(this)
+
+    window.addEventListener( 'keydown', this.onkeyPressed );
+    window.addEventListener( 'keyup', this.onkeyUnPressed );
+
+  	return this.someKeyIsPressed;
   }
 
 }
