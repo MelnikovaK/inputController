@@ -1,53 +1,78 @@
-
-var target = document.getElementById('object');
-
+// INIT
 var actions = {
+	
 	"left": { // название активности
 		keys: [37,65], // список кодов кнопок соответствующих активности
-		gesture: ['swipe-left'],
 		enabled: true // отключенная активность по умолчанию
 	},
 	"right": {
 		keys: [100,68],
-		gesture: ['swipe-right'],
 	},
 	"up": {
 		keys: [87],
-		gesture: ['swipe-up'],
 	},
 	"down": {
 		keys: [83],
+	},
+
+	"move-left": { // название активности
+		gesture: ['swipe-left'],
+	},
+	"move-right": {
+		gesture: ['swipe-right'],
+	},
+	"move-up": {
+		gesture: ['swipe-up'],
+	},
+	"move-down": {
 		gesture: ['swipe-down'],
 	},
+
 }
 
+var target = document.getElementById('container');
 // let inputController = new InputController( actions, target );
-
 let inputController = new InputController( actions );
 
 
+
+
+// TESTING
+
+var moving_object = document.getElementById('object');
 
 // EVENT BASED BEHAVIOR
 target.addEventListener( inputController.ACTION_ACTIVATED, function (e) {
   console.log("ACTION_ACTIVATED: ", e.detail );
   if( e.detail == 'jump' ){
-  	target.style.borderColor = "#f00";
+  	moving_object.style.borderColor = "#f00";
   }
 }, false);
 
 target.addEventListener( inputController.ACTION_DEACTIVATED, function (e) {
   console.log("ACTION_DEACTIVATED: ", e );
   if( e.detail == 'jump' ){
-  	target.style.borderColor = "#000";
+  	moving_object.style.borderColor = "#000";
   }
 }, false);
 
+target.addEventListener( inputController.ACTION_TRIGGERED, function (e) {
+  console.log("ACTION_TRIGGERED: ", e );
+  var xs, ys;
+  switch( e.detail ){
+  	case "move-left": xs = -20; break;
+  	case "move-right": xs = 20; break;
+  	case "move-up": ys = -20; break;
+  	case "move-down": ys = 20; break;
+  }
+  
+  moveObject(xs,ys);
+
+}, false);
 
 
 // ITERATION BASED BEHAVIOR
 function gamestep(){
-
-	var style = getComputedStyle(target);
 
 	var xs, ys;
 
@@ -57,10 +82,7 @@ function gamestep(){
 		xs = 2;
 	}
 
-	if( xs ) {
-		var left = parseInt(style.getPropertyValue("left"));
-		target.style.left = (left + xs) +'px';
-	}
+	
 
 	if( inputController.isActionActive("up") ){
 		ys = -2;
@@ -68,16 +90,29 @@ function gamestep(){
 		ys = 2;
 	}
 
-	if( ys ) {
-		var top = parseInt(style.getPropertyValue("top"));
-		target.style.top = (top + ys) +'px';
-	}
+	moveObject(xs,ys);
 
 	// if( inputController.isKeyPressed(32) ){
 	// 	console.log("JUMP!");
 	// }
 
 	requestAnimationFrame(gamestep);
+}
+
+
+function moveObject(xs,ys){
+	
+	var style = getComputedStyle(moving_object);
+
+	if( xs ) {
+		var left = parseInt(style.getPropertyValue("left"));
+		moving_object.style.left = (left + xs) +'px';
+	}
+	
+	if( ys ) {
+		var top = parseInt(style.getPropertyValue("top"));
+		moving_object.style.top = (top + ys) +'px';
+	}
 }
 
 gamestep();
