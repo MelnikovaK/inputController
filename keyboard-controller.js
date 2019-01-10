@@ -7,11 +7,11 @@ class InputController {
 
     //
     this.enabled = true;
-    this.someKeyIsPressed = false;
 
     //
     this.actions = {};
     this.actions_by_keycode = {};
+    this.keys = {};
     
     //
     if( actions_to_bind ) this.bindActions( actions_to_bind );
@@ -51,10 +51,12 @@ class InputController {
   		//
   		action.keys.forEach(function(keycode){
   			this.actions_by_keycode[keycode] = action;
+  			var key = {
+  				is_pressed: false
+  			};
+		  	this.keys[keycode] = key;
   		}.bind(this));
-
   	}
-  	console.log('actions_by_keycode: ', this.actions_by_keycode);
   }
 
   enableAction( action_name ) {
@@ -68,7 +70,9 @@ class InputController {
   }
 
   isActionActive(action_name) {
-		return this.actions[action_name].active;
+  	var action = this.actions[action_name];
+  	if( !action ) return;
+		return action.active;
   }
 
   _setActionActive( action, activate ){
@@ -79,22 +83,30 @@ class InputController {
   	this.target.dispatchEvent(event);
   }
 
-
+  _changeKeyPress(key_code, activate) {
+  	if ( !this.enabled ) return;
+  	var key = this.keys[key_code];
+  	if( !key ) return;
+  	key.is_pressed = activate;
+  }
 
   // KEYBOARD
-  attachKeyboard( target ){
+  attachKeyboard( target, keyCode ){
 
   	if( !this.onKeyDown ){
 		  this.onKeyDown = function(event){
 		  	var key_code = event.keyCode;
 		  	var action = this.actions_by_keycode[key_code];
-		  	this._setActionActive(action,true);
+		  	this._setActionActive(action, true);
+		  	this._changeKeyPress(key_code, true);
+  			console.log( key_code );
 		  }.bind(this);
 
 		  this.onKeyUp = function(event){
 		  	var key_code = event.keyCode;
 		  	var action = this.actions_by_keycode[key_code];
-		  	this._setActionActive(action,false);
+		  	this._setActionActive(action, false);
+		  	this._changeKeyPress(key_code, false);
 		  }.bind(this);
   	}
 
@@ -112,20 +124,6 @@ class InputController {
   //
 
   isKeyPressed(keyCode) {
-  	this.onkeyPressed = function(event) {
-  		if ( event.keyCode == keyCode ) {
-  			this.someKeyIsPressed = true;
-  		}
-  	}.bind(this)
-
-  	this.onkeyUnPressed = function(event) {
-  			this.someKeyIsPressed = false;
-  	}.bind(this)
-
-    window.addEventListener( 'keydown', this.onkeyPressed );
-    window.addEventListener( 'keyup', this.onkeyUnPressed );
-
-  	return this.someKeyIsPressed;
-  }
-
+  	if ( this.keys[keyCode] ) return this.keys[keyCode].is_pressed;
+	}
 }

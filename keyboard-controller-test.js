@@ -4,12 +4,21 @@ var target = document.getElementById('object');
 var actions = {
 	"left": { // название активности
 		keys: [37,65], // список кодов кнопок соответствующих активности
+		gesture: ['swipe-left'],
 		enabled: true // отключенная активность по умолчанию
 	},
 	"right": {
 		keys: [100,68],
-		enabled: true
-	}
+		gesture: ['swipe-right'],
+	},
+	"up": {
+		keys: [87],
+		gesture: ['swipe-up'],
+	},
+	"down": {
+		keys: [83],
+		gesture: ['swipe-down'],
+	},
 }
 
 // let inputController = new InputController( actions, target );
@@ -37,22 +46,36 @@ target.addEventListener( inputController.ACTION_DEACTIVATED, function (e) {
 
 // ITERATION BASED BEHAVIOR
 function gamestep(){
-	// console.log("gamestep");
 
-	if( inputController.actions["left"].active ){
-		var style = getComputedStyle(target);
-		var left = parseInt(style.getPropertyValue("left")) - 2;
-		target.style.left = left + 'px';
+	var style = getComputedStyle(target);
 
-	} else if( inputController.actions["right"].active ){
-		var style = getComputedStyle(target);
-		var left = parseInt(style.getPropertyValue("left")) + 2;
-		target.style.left = left + 'px';
+	var xs, ys;
+
+	if( inputController.isActionActive("left") ){
+		xs = -2;
+	} else if( inputController.isActionActive("right") ){
+		xs = 2;
 	}
-	
-	if( inputController.isKeyPressed(32) ){
-		console.log("JUMP!");
+
+	if( xs ) {
+		var left = parseInt(style.getPropertyValue("left"));
+		target.style.left = (left + xs) +'px';
 	}
+
+	if( inputController.isActionActive("up") ){
+		ys = -2;
+	} else if( inputController.isActionActive("down") ){
+		ys = 2;
+	}
+
+	if( ys ) {
+		var top = parseInt(style.getPropertyValue("top"));
+		target.style.top = (top + ys) +'px';
+	}
+
+	// if( inputController.isKeyPressed(32) ){
+	// 	console.log("JUMP!");
+	// }
 
 	requestAnimationFrame(gamestep);
 }
@@ -87,17 +110,18 @@ gamestep();
 //
 var buttons_e = document.getElementById("buttons");
 
-function addButton( name, foo ){
+function addButton( name, foo, execute_on_creation ){
 	var e = document.createElement('button');
 	buttons_e.appendChild(e);
 	e.innerText = name;
 	e.addEventListener('click', foo );
+	if( execute_on_creation ) foo();
 }
 
 //
 addButton('Attach', function() {
 	inputController.attach( target );
-});
+}, true);
 
 addButton('Detach', function() {
 	inputController.detach();
@@ -119,4 +143,4 @@ addButton('Jump', function() {
 		}
 	}
 	inputController.bindActions(actions);
-});
+}, true );
