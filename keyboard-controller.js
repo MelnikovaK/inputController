@@ -1,6 +1,6 @@
 class InputController {
 
-  constructor( actions_to_bind, target ) {
+  constructor( config_data, target ) {
     
     this.ACTION_ACTIVATED = "input-controller:action-activated";
     this.ACTION_DEACTIVATED  = "input-controller:action-deactivated";
@@ -8,19 +8,59 @@ class InputController {
 
     //
     this.enabled = true;
+    this._keyboard_enabled = config_data.keyboard_enabled;
+    this._mouse_enabled = config_data.mouse_enabled;
+    this._touch_enabled = config_data.touch_enabled;
 
     //
     this.actions = {};
     this.actions_by_keycode = {};
     this.keys = {};
     this.actions_by_gesture = {};
-    this.active_mouse_actions = [];
 
+    //
+    this.swipe_min_distance = config_data.swipe_min_distance;
+    this.swipe_max_distance = config_data.swipe_max_distance;
     
     //
+    var actions_to_bind = config_data.actions;
     if( actions_to_bind ) this.bindActions( actions_to_bind );
     if( target ) this.attach( target );
+
+    Object.defineProperty(this, "keyboard_enabled", {
+		  get: function() {
+		    return this._keyboard_enabled;
+		  },
+
+		  set: function(value) {
+		  	if( !(this.enabled && this.target) ) return;
+		      this._keyboard_enabled = value;
+		    }
+		});
+
+		Object.defineProperty(this, "mouse_enabled", {
+		  get: function() {
+		    return this._mouse_enabled;
+		  },
+
+		  set: function(value) {
+		  	if( !(this.enabled && this.target) ) return;
+		      this._mouse_enabled = value;
+		    }
+		});
+
+		Object.defineProperty(this, "touch_enabled", {
+		  get: function() {
+		    return this._touch_enabled;
+		  },
+
+		  set: function(value) {
+		  	if( !(this.enabled && this.target) ) return;
+		      this._touch_enabled = value;
+		    }
+		});
   }
+    
 
   //
   attach( target, dont_enable ) {
@@ -28,7 +68,6 @@ class InputController {
   	this.target = target;
   	target.focus();
   	if( dont_enable ) this.enabled = false;
-  	
   	this.attachKeyboard( target );
   	this.attachMouse( target );
   
@@ -38,6 +77,7 @@ class InputController {
   	if( !this.target ) return;
   	target.blur();
   	this.detachKeyboard();
+  	this.detachMouse();
   	this.target = null;
   }
 
@@ -92,7 +132,7 @@ class InputController {
   }
 
   _setActionActive( action, activate ){
-  	if ( !( this.enabled && action && action.enabled ) ) return false;
+  	if ( !( this.enabled && action && action.enabled && this.keyboard_enabled )) return false;
   	if( action.active == activate ) return false;
   	action.active = activate;
   	console.log('ACTION NAME: ', action)
@@ -101,7 +141,7 @@ class InputController {
   }
 
   emitActionEvent( action ){
-  	if ( !( this.enabled && action && action.enabled ) ) return false;
+  	if ( !( this.enabled && action && action.enabled && this.mouse_enabled ) ) return false;
   	var event = new CustomEvent( this.ACTION_TRIGGERED, { 'detail': action.name });
   	this.target.dispatchEvent(event);
   }
@@ -112,14 +152,13 @@ class InputController {
 
   // >>> KEYBOARD >>>
   _changeKeyPress(key_code, activate) {
-  	if ( !this.enabled ) return;
+  	if ( !(this.enabled && this.keyboard_enabled) ) return;
   	var key = this.keys[key_code];
   	if( !key ) return;
   	key.is_pressed = activate;
   }
 
   attachKeyboard( target ){
-
   	if( !this.onKeyDown ){
 		  this.onKeyDown = function(event){
 		  	var key_code = event.keyCode;
@@ -166,58 +205,80 @@ class InputController {
 		if( !this.onMouseDown ){
 			
 			var start_X, start_Y;
-
 		  this.onMouseDown = function(event){
+		  	event.preventDefault();
 		  	if (event.which != 1) return;
 		  	start_X = event.clientX;
 		  	start_Y = event.clientY;
-		  	// console.log('onMouseDown: ', start_X, start_Y, event );
-		  	// window.addEventListener('mousemove', this.onMouseMove)
+		  	this.removeMouseMoveListeners();
+		  	target.addEventListener('mousemove', this.onMouseMove);
+				target.addEventListener('mouseup', this.onMouseUp );
 		  }.bind(this);
 
-		  // this.onMouseMove = function(event){
-		  // 	finish_X = event.clientX;
-		  // 	finish_Y = event.clientY;
-		  // 	this.active_mouse_actions.push(this.computeGestureName(start_X, start_Y, finish_X, finish_Y));
-		  // 	this._changeActionsActive(true);
-		  // }.bind(this);
-
 		  this.onMouseUp = function(event){
-		  	// console.log('onMouseUp: ', start_X, start_Y, event );
-		  	// window.removeEventListener('mousemove', this.onMouseMove);
-		  	// this._changeActionsActive(false);
-		  	// this.active_mouse_actions = [];
-		  	var gesture_name = this.computeGestureName( start_X, start_Y, event.clientX, event.clientY );
+		  	event.preventDefault();
+		  	var gesture_name = this.computeGestureName( start_X, start_Y, event.clientX, event.clientY, false );
 		  	if( gesture_name ){
 		  		this.emitActionEvent(this.actions_by_gesture[gesture_name]);
 		  	}
-
+		  	this.removeMouseMoveListeners();
+		  }.bind(this);
+		
+		  this.onMouseMove = function(event){
+		  	event.preventDefault();
+		  	var finish_X = event.clientX;
+        var finish_Y = event.clientY;
+		  	var gesture_name = this.computeGestureName( start_X, start_Y, finish_X, finish_Y, true );
+		  	if (gesture_name) {
+		  		this.emitActionEvent(this.actions_by_gesture[gesture_name]);
+		  		// start_X = event.clientX;
+		  		// start_Y = event.clientY;
+		  		this.removeMouseMoveListeners();
+		  	}
 		  }.bind(this);
   	}
 
 		target.addEventListener('mousedown', this.onMouseDown );
-		window.addEventListener('mouseup', this.onMouseUp );
+		// target.addEventListener('mouseup', this.onMouseUp );
+	}
+
+	removeMouseMoveListeners(){
+		if( !target ) return;
+		target.removeEventListener('mousemove', this.onMouseMove);
+		target.removeEventListener('mouseup', this.onMouseUp );
 	}
 
 	detachMouse(){
   	if( !this.target ) return;
   	target.removeEventListener('mousedown', this.onMouseDown );
-  	window.removeEventListener( 'mouseup', this.onMouseUp );
+  	this.removeMouseMoveListeners();
   }
 
   //
-  computeGestureName(start_X, start_Y, finish_X, finish_Y) {
+  computeGestureName(start_X, start_Y, finish_X, finish_Y, on_move) {
 		
 		var gesture_name = '';
+		
 		var horizontal_difference = start_X - finish_X;
 		var vertical_difference = start_Y - finish_Y;
+		var horizontal_difference_abs = Math.abs(horizontal_difference);
+		var vertical_difference_abs = Math.abs(vertical_difference);
 
-		if ( Math.abs(horizontal_difference) > Math.abs(vertical_difference)) {
+		var max_length = horizontal_difference_abs > vertical_difference_abs ? horizontal_difference_abs : vertical_difference_abs;
+		if( max_length < this.swipe_min_distance ) return; // min swipe length
+
+		if ( horizontal_difference_abs > vertical_difference_abs) {
 			if ( horizontal_difference < 0 ) gesture_name = 'swipe-right';
 			else gesture_name = 'swipe-left';
 		} else {
 			if ( vertical_difference < 0 ) gesture_name = 'swipe-down';
 			else gesture_name = 'swipe-up';
+		}
+		
+		// if(on_move) console.log(">", gesture_name, max_length, this.swipe_max_distance );
+		if( on_move ) {
+			if(  max_length > this.swipe_max_distance ) return gesture_name;
+			return false;
 		}
 
 		return gesture_name;

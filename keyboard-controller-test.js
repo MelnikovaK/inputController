@@ -1,38 +1,46 @@
 // INIT
-var actions = {
+var config = {
 	
-	"left": { // название активности
-		keys: [37,65], // список кодов кнопок соответствующих активности
-		enabled: true // отключенная активность по умолчанию
-	},
-	"right": {
-		keys: [100,68],
-	},
-	"up": {
-		keys: [87],
-	},
-	"down": {
-		keys: [83],
-	},
+	keyboard_enabled: true,
+	mouse_enabled: true,
+	touch_enabled: true,
 
-	"move-left": { // название активности
-		gesture: ['swipe-left'],
-	},
-	"move-right": {
-		gesture: ['swipe-right'],
-	},
-	"move-up": {
-		gesture: ['swipe-up'],
-	},
-	"move-down": {
-		gesture: ['swipe-down'],
-	},
+	swipe_min_distance: 10,
+	swipe_max_distance: 80,
 
+	actions: {
+		"left": { // название активности
+			keys: [37,65], // список кодов кнопок соответствующих активности
+			enabled: true // отключенная активность по умолчанию
+		},
+		"right": {
+			keys: [100,68],
+		},
+		"up": {
+			keys: [87],
+		},
+		"down": {
+			keys: [83],
+		},
+
+		"move-left": { // название активности
+			gesture: ['swipe-left'],
+		},
+		"move-right": {
+			gesture: ['swipe-right'],
+		},
+		"move-up": {
+			gesture: ['swipe-up'],
+		},
+		"move-down": {
+			gesture: ['swipe-down'],
+		},
+	}
 }
 
 var target = document.getElementById('container');
 // let inputController = new InputController( actions, target );
-let inputController = new InputController( actions );
+let inputController = new InputController( config );
 
 
 
@@ -162,14 +170,6 @@ addButton('Detach', function() {
 	inputController.detach();
 });
 
-addButton('Enable', function() {
-	inputController.enabled = true;
-});
-
-addButton('Disable', function() {
-	inputController.enabled = false;
-});
-
 addButton('Jump', function() {
 	actions = {
 		"jump": {
@@ -179,3 +179,36 @@ addButton('Jump', function() {
 	}
 	inputController.bindActions(actions);
 }, true );
+
+addButton('Enable controller', function() {
+	inputController.enabled = true;
+});
+
+addButton('Disable controller', function() {
+	inputController.enabled = false;
+});
+
+
+addButton('Enable keyboard', function() {
+	inputController.keyboard_enabled = true;
+});
+
+addButton('Disable keyboard', function() {
+	inputController.keyboard_enabled = false;
+});
+
+addButton('Enable mouse', function() {
+	inputController.mouse_enabled = true;
+});
+
+addButton('Disable mouse', function() {
+	inputController.mouse_enabled = false;
+});
+
+addButton('Enable touch', function() {
+	inputController.touch_enabled = true;
+});
+
+addButton('Disable touch', function() {
+	inputController.touch_enabled = false;
+});
